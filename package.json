@@ -1,0 +1,45 @@
+{
+  "name": "bluesky-swahili-cli",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": {
+    "swahili": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "dev": "ts-node src/cli.ts",
+    "test": "vitest run",
+    "lint": "prettier --check src",
+    "lint:fix": "prettier --write src"
+  },
+  "keywords": [
+    "bluesky",
+    "swahili",
+    "language-detection",
+    "cli"
+  ],
+  "author": "",
+  "license": "MIT",
+  "description": "CLI to fetch and filter Bluesky posts by Swahili language",
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/langdetect": "^0.2.2",
+    "@types/node": "^24.10.1",
+    "@typescript-eslint/eslint-plugin": "^8.13.0",
+    "@typescript-eslint/parser": "^8.13.0",
+    "eslint": "^9.14.0",
+    "globals": "^16.5.0",
+    "prettier": "^3.3.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "vitest": "^3.1.1",
+    "vitest-mock-extended": "^1.0.0"
+  },
+  "dependencies": {
+    "@atproto/api": "^0.18.1",
+    "dotenv": "^17.2.3",
+    "langdetect": "^0.2.1"
+  }
+}
