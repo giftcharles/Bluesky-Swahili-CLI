@@ -1,6 +1,6 @@
 # Bluesky Swahili CLI
 
-[![CI](https://github.com/your-username/bluesky-swahili-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/bluesky-swahili-cli/actions/workflows/ci.yml)
+[![CI](https://github.com/giftcharles/Bluesky-Swahili-CLI/actions/workflows/ci.yml/badge.svg)](https://github.com/giftcharles/Bluesky-Swahili-CLI/actions/workflows/ci.yml)
 
 A command-line tool to fetch and filter Bluesky posts by Swahili language with ≥98% accuracy.
 
@@ -31,8 +31,8 @@ npx bluesky-swahili-cli bsky.app
 ### Local Development
 
 ```bash
-git clone https://github.com/your-username/bluesky-swahili-cli.git
-cd bluesky-swahili-cli
+git clone https://github.com/giftcharles/Bluesky-Swahili-CLI.git
+cd Bluesky-Swahili-CLI
 npm install
 npm run build
 npm start -- bsky.app
@@ -107,8 +107,6 @@ Done. Printed 3 Swahili posts.
 |----------|----------|-------------|---------|
 | `BSKY_USERNAME` | ✅ Yes | Your Bluesky handle | `user.bsky.social` |
 | `BSKY_PASSWORD` | ✅ Yes | Your Bluesky app password | `abcd-efgh-ijkl-mnop` |
-
-For more info on Bluesky app passwords, see the [Bluesky docs](https://atproto.com/guides/working-with-app-passwords).
 
 ## Development
 
@@ -191,7 +189,19 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Support
 
-For issues or feature requests, please open an issue on GitHub.
+For issues or feature requests, please open an issue on [GitHub](https://github.com/giftcharles/Bluesky-Swahili-CLI/issues).
+
+## Publishing
+
+This package is published on npm and can be installed globally or used with npx.
+
+To publish updates:
+
+```bash
+npm version patch|minor|major
+npm publish
+git push origin main --tags
+```
 
 ---
 
