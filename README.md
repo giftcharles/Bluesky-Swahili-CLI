@@ -48,7 +48,50 @@ npm start -- bsky.app
 
 ### 2. Set Environment Variables
 
-Create a `.env` file in your working directory:
+#### For Global Installation
+
+When using `npm install -g bluesky-swahili-cli`, create a `.env` file in your working directory or home directory:
+
+**Option A: Per-directory setup** (create `.env` where you run the command)
+
+```bash
+# Navigate to your working directory
+cd ~/my-project
+
+# Create .env file
+cat > .env << 'EOF'
+BSKY_USERNAME=your-handle.bsky.social
+BSKY_PASSWORD=your-app-password
+EOF
+
+# Run the CLI
+swahili bsky.app
+```
+
+**Option B: Home directory setup** (recommended - works from anywhere)
+
+```bash
+# Create .env in home directory
+cat > ~/.env << 'EOF'
+BSKY_USERNAME=your-handle.bsky.social
+BSKY_PASSWORD=your-app-password
+EOF
+
+# Now run from any directory
+swahili bsky.app
+```
+
+**Option C: Environment variables** (no file needed)
+
+```bash
+export BSKY_USERNAME="your-handle.bsky.social"
+export BSKY_PASSWORD="your-app-password"
+swahili bsky.app
+```
+
+#### For Local Development
+
+Create a `.env` file in the project root:
 
 ```env
 BSKY_USERNAME=your-handle.bsky.social
