@@ -177,7 +177,8 @@ async function crawlForNewProfiles(
   maxProfiles: number = 20
 ): Promise<CachedProfile[]> {
   const newProfiles: CachedProfile[] = [];
-  const checked = new Set<string>(cache.crawlHistory.slice(-100));
+  // Only check against already cached profiles, not crawl history (allow re-crawling)
+  const checked = new Set<string>(Object.keys(cache.profiles));
 
   try {
     // Get the profile
@@ -186,30 +187,34 @@ async function crawlForNewProfiles(
 
     const did = profile.data.did;
 
-    // Strategy 1: Get followers of this Swahili speaker
+    // Strategy 1: Get followers of this Swahili speaker (increased limit)
     try {
       const followers = await agent.getFollowers({
         actor: did,
-        limit: 30,
+        limit: 50, // Increased from 30
       });
 
       for (const follower of followers.data.followers) {
-        if (checked.has(follower.did) || cache.profiles[follower.did]) continue;
+        if (checked.has(follower.did)) continue;
         checked.add(follower.did);
 
         // Quick check: fetch a few posts to see if they post in Swahili
         try {
           const feed = await agent.getAuthorFeed({
             actor: follower.did,
-            limit: 5,
+            limit: 10, // Increased from 5
           });
 
           let swahiliCount = 0;
+          const tags: string[] = [];
           for (const item of feed.data.feed) {
             const record = item.post.record as { text?: string };
             if (record?.text) {
               const { isSwahili: isSw } = isSwahili(record.text);
-              if (isSw) swahiliCount++;
+              if (isSw) {
+                swahiliCount++;
+                tags.push(...extractHashtags(record.text));
+              }
             }
           }
 
@@ -223,7 +228,7 @@ async function crawlForNewProfiles(
               swahiliPostCount: swahiliCount,
               engagementScore: 1,
               discoveredFrom: `follower_of:${startHandle}`,
-              tags: [],
+              tags: [...new Set(tags)],
             });
           }
         } catch {
@@ -231,7 +236,7 @@ async function crawlForNewProfiles(
         }
 
         // Rate limiting
-        await new Promise((r) => setTimeout(r, 100));
+        await new Promise((r) => setTimeout(r, 80));
 
         if (newProfiles.length >= maxProfiles) break;
       }
@@ -239,15 +244,15 @@ async function crawlForNewProfiles(
       console.error("Error crawling followers:", error);
     }
 
-    // Strategy 2: Get who they follow
+    // Strategy 2: Get who they follow (increased limit)
     try {
       const following = await agent.getFollows({
         actor: did,
-        limit: 30,
+        limit: 50, // Increased from 30
       });
 
       for (const followed of following.data.follows) {
-        if (checked.has(followed.did) || cache.profiles[followed.did]) continue;
+        if (checked.has(followed.did)) continue;
         if (newProfiles.length >= maxProfiles) break;
 
         checked.add(followed.did);
@@ -255,7 +260,7 @@ async function crawlForNewProfiles(
         try {
           const feed = await agent.getAuthorFeed({
             actor: followed.did,
-            limit: 5,
+            limit: 10, // Increased from 5
           });
 
           let swahiliCount = 0;
@@ -289,13 +294,13 @@ async function crawlForNewProfiles(
           // Skip on error
         }
 
-        await new Promise((r) => setTimeout(r, 100));
+        await new Promise((r) => setTimeout(r, 80));
       }
     } catch (error) {
       console.error("Error crawling following:", error);
     }
 
-    // Strategy 3: Search for Swahili hashtags to find new creators
+    // Strategy 3: Search for multiple Swahili hashtags (not just one random)
     const swahiliHashtags = [
       "kiswahili",
       "swahili",
@@ -307,26 +312,77 @@ async function crawlForNewProfiles(
       "karibu",
       "afrika",
       "mashariki",
+      "nairobi",
+      "daressalaam",
+      "mombasa",
+      "swahilipost",
+      "lugha",
     ];
 
-    const randomTag = swahiliHashtags[Math.floor(Math.random() * swahiliHashtags.length)];
+    // Search multiple hashtags for better coverage
+    const tagsToSearch = shuffle(swahiliHashtags).slice(0, 3);
+
+    for (const randomTag of tagsToSearch) {
+      if (newProfiles.length >= maxProfiles) break;
+
+      try {
+        const searchResults = await agent.app.bsky.feed.searchPosts({
+          q: `#${randomTag}`,
+          limit: 30,
+        });
+
+        for (const post of searchResults.data.posts) {
+          const authorDid = post.author.did;
+          if (checked.has(authorDid)) continue;
+          if (newProfiles.length >= maxProfiles) break;
+
+          checked.add(authorDid);
+
+          const record = post.record as { text?: string };
+          if (record?.text) {
+            const { isSwahili: isSw } = isSwahili(record.text);
+            if (isSw) {
+              newProfiles.push({
+                did: authorDid,
+                handle: post.author.handle,
+                displayName: post.author.displayName,
+                discoveredAt: new Date().toISOString(),
+                lastSeen: new Date().toISOString(),
+                swahiliPostCount: 1,
+                engagementScore: calculateEngagement(post),
+                discoveredFrom: `hashtag:${randomTag}`,
+                tags: extractHashtags(record.text),
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Error searching #${randomTag}:`, error);
+      }
+
+      await new Promise((r) => setTimeout(r, 200));
+    }
+
+    // Strategy 4: Search for common Swahili words/phrases (new!)
+    const swahiliPhrases = ["habari yako", "asante sana", "karibu sana", "jambo", "mambo vipi"];
+    const randomPhrase = swahiliPhrases[Math.floor(Math.random() * swahiliPhrases.length)];
 
     try {
       const searchResults = await agent.app.bsky.feed.searchPosts({
-        q: `#${randomTag}`,
+        q: randomPhrase,
         limit: 25,
       });
 
       for (const post of searchResults.data.posts) {
         const authorDid = post.author.did;
-        if (checked.has(authorDid) || cache.profiles[authorDid]) continue;
+        if (checked.has(authorDid)) continue;
         if (newProfiles.length >= maxProfiles) break;
 
         checked.add(authorDid);
 
         const record = post.record as { text?: string };
         if (record?.text) {
-          const { isSwahili: isSw, confidence } = isSwahili(record.text);
+          const { isSwahili: isSw } = isSwahili(record.text);
           if (isSw) {
             newProfiles.push({
               did: authorDid,
@@ -336,23 +392,23 @@ async function crawlForNewProfiles(
               lastSeen: new Date().toISOString(),
               swahiliPostCount: 1,
               engagementScore: calculateEngagement(post),
-              discoveredFrom: `hashtag:${randomTag}`,
+              discoveredFrom: `phrase:${randomPhrase}`,
               tags: extractHashtags(record.text),
             });
           }
         }
       }
     } catch (error) {
-      console.error("Error searching hashtags:", error);
+      console.error(`Error searching phrase "${randomPhrase}":`, error);
     }
   } catch (error) {
     console.error("Error in crawl:", error);
   }
 
-  // Update crawl history
+  // Update crawl history (keep it shorter to allow re-crawling sooner)
   cache.crawlHistory.push(startHandle);
-  if (cache.crawlHistory.length > 200) {
-    cache.crawlHistory = cache.crawlHistory.slice(-100);
+  if (cache.crawlHistory.length > 50) {
+    cache.crawlHistory = cache.crawlHistory.slice(-25);
   }
 
   return newProfiles;
@@ -386,30 +442,33 @@ export async function smartDiscoverSwahiliPosts(
 
   console.log(`📊 Cache has ${Object.keys(cache.profiles).length} known Swahili profiles`);
 
-  // Decide: explore (crawl for new) or exploit (use cache)
-  const shouldExplore = Math.random() < explorationRate || Object.keys(cache.profiles).length < 10;
+  // Always explore if cache is small, otherwise use exploration rate
+  // Also do a mini-exploration even when not fully exploring
+  const cacheSize = Object.keys(cache.profiles).length;
+  const shouldFullExplore = Math.random() < explorationRate || cacheSize < 15;
+  const shouldMiniExplore = cacheSize < 50; // Always do mini exploration until we have 50 profiles
 
-  // Get starting profiles
-  let startingProfiles: string[] = [];
+  // Get starting profiles for crawling
+  const allSeeds = [
+    ...cache.seedProfiles,
+    ...Object.values(cache.profiles)
+      .sort(() => Math.random() - 0.5) // Shuffle
+      .slice(0, 30)
+      .map((p) => p.handle),
+  ];
+  const seeds = shuffle(allSeeds);
 
-  if (shouldExplore || Object.keys(cache.profiles).length < 5) {
-    // Exploration mode: start from seeds or random cached profiles
-    console.log("🔍 Exploration mode: discovering new profiles...");
+  if (shouldFullExplore) {
+    // Full exploration mode: crawl from multiple starting points
+    console.log("🔍 Full exploration mode: discovering new profiles...");
 
-    const seeds = shuffle([
-      ...cache.seedProfiles,
-      ...Object.values(cache.profiles)
-        .slice(0, 20)
-        .map((p) => p.handle),
-    ]);
-
-    // Crawl from a few random starting points
-    for (let i = 0; i < Math.min(3, seeds.length); i++) {
+    const crawlCount = Math.min(5, seeds.length); // Increased from 3
+    for (let i = 0; i < crawlCount; i++) {
       const startHandle = seeds[i];
       console.log(`🕷️ Crawling from @${startHandle}...`);
 
       try {
-        const newProfiles = await crawlForNewProfiles(agent, cache, startHandle, 15);
+        const newProfiles = await crawlForNewProfiles(agent, cache, startHandle, 25); // Increased from 15
 
         for (const profile of newProfiles) {
           if (!cache.profiles[profile.did]) {
@@ -424,7 +483,27 @@ export async function smartDiscoverSwahiliPosts(
         console.error(`  ✗ Error crawling ${startHandle}:`, error);
       }
 
-      await new Promise((r) => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 300));
+    }
+  } else if (shouldMiniExplore) {
+    // Mini exploration: just one quick crawl to keep growing
+    console.log("🔍 Mini exploration mode...");
+    const startHandle = seeds[0];
+
+    try {
+      const newProfiles = await crawlForNewProfiles(agent, cache, startHandle, 10);
+
+      for (const profile of newProfiles) {
+        if (!cache.profiles[profile.did]) {
+          cache.profiles[profile.did] = profile;
+          newProfilesDiscovered++;
+          cache.totalDiscoveries++;
+        }
+      }
+
+      console.log(`  ✓ Mini crawl found ${newProfiles.length} new profiles`);
+    } catch (error) {
+      console.error(`  ✗ Mini crawl error:`, error);
     }
   }
 
