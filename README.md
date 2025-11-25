@@ -107,11 +107,13 @@ export BSKY_PASSWORD="your-app-password"
 
 ## Usage
 
+### Normal Mode: Fetch from a Specific Handle
+
 ```bash
 swahili <handle>
 ```
 
-### Example
+#### Example
 
 ```bash
 $ swahili bsky.app
@@ -143,6 +145,125 @@ Karibu! Tutaonana upande ujao.
 
 Done. Printed 3 Swahili posts.
 ```
+
+### Discovery Mode: Find Swahili Content Automatically
+
+Discover Swahili posts without manually specifying accounts using intelligent traversal strategies:
+
+```bash
+swahili --discover [OPTIONS]
+```
+
+#### Discovery Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--limit <number>` | Maximum posts to find | 50 |
+| `--sources <number>` | Number of handles to check | 10 |
+| `--strategy <type>` | Discovery strategy: `random`, `trending`, or `mixed` | `mixed` |
+| `--tag <hashtag>` | Specific hashtag to follow (use multiple times for OR) | - |
+| `--json` | Output results as JSON | text |
+
+#### Discovery Strategies
+
+- **random**: Randomly select handles and fetch their posts
+- **trending**: Search popular Swahili hashtags (#sw, #tanzania, #kenya, etc.)
+- **mixed**: Combine trending hashtags and random handles for comprehensive coverage (recommended)
+
+#### Discovery Examples
+
+```bash
+# Find 50 Swahili posts from random sources (mixed strategy)
+swahili --discover
+
+# Find 100 posts using only trending hashtags
+swahili --discover --limit 100 --strategy trending
+
+# Find 50 posts specific to Tanzania
+swahili --discover --tag tanzania
+
+# Find posts with multiple hashtags
+swahili --discover --tag tanzania --tag kenya --tag uganda
+
+# Find 75 posts and export as JSON
+swahili --discover --limit 75 --json > swahili-posts.json
+
+# Find 200 posts checking more sources
+swahili --discover --limit 200 --sources 30
+
+# Combine specific handle with discovery
+swahili changetanzania.bsky.social --discover
+```
+
+#### Discovery Output Example
+
+```bash
+$ swahili --discover --limit 20
+
+Logging into Bluesky...
+✓ Login successful
+
+Discovering Swahili posts...
+✓ Searched hashtags: #sw, #swahili, #tanzania, #kenya
+✓ Checked 12 handles
+✓ Found 20 Swahili posts
+
+═══════════════════════════════════════════════════════════════
+
+[2025-11-24T10:45:00.000Z] [From: @user1.bsky.social | Method: tag_sw]
+Habari yako leo? Najifunza programu za kuandika.
+🔗 https://bsky.app/profile/user1.bsky.social/post/abc123
+
+[2025-11-24T10:43:00.000Z] [From: @user2.bsky.social | Method: random_handle]
+Asante sana kwa msaada!
+🔗 https://bsky.app/profile/user2.bsky.social/post/def456
+
+═══════════════════════════════════════════════════════════════
+
+Done. Found 20 Swahili posts from 12 sources (mixed strategy).
+```
+
+#### Discovery JSON Output
+
+```bash
+$ swahili --discover --limit 5 --json
+
+{
+  "mode": "discover",
+  "strategy": "mixed",
+  "limit": 50,
+  "sources": 12,
+  "posts": [
+    {
+      "uri": "at://did:plc:user1/app.bsky.feed.post/abc123",
+      "text": "Habari yako leo?",
+      "createdAt": "2025-11-24T10:45:00.000Z",
+      "discoveredFrom": "user1.bsky.social",
+      "discoveryMethod": "tag_sw",
+      "confidence": 0.99
+    },
+    {
+      "uri": "at://did:plc:user2/app.bsky.feed.post/def456",
+      "text": "Asante sana!",
+      "createdAt": "2025-11-24T10:43:00.000Z",
+      "discoveredFrom": "user2.bsky.social",
+      "discoveryMethod": "random_handle",
+      "confidence": 0.98
+    }
+  ],
+  "totalFound": 5,
+  "timestamp": "2025-11-24T10:50:00.000Z"
+}
+```
+
+#### Discovery Tips
+
+- Use `--strategy trending` for quality (hashtag-based) results
+- Use `--strategy random` for quantity and diverse sources
+- Use `--strategy mixed` for balanced results (recommended)
+- Add multiple `--tag` options to narrow results: `--tag tanzania --tag kenya`
+- Export to JSON for further processing: `--json > results.json`
+- Discovery respects the ≥98% Swahili confidence threshold
 
 ## Environment Variables
 
