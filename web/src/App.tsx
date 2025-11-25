@@ -207,8 +207,8 @@ function App() {
       {mode === "discover" ? (
         <form className="search-form" onSubmit={handleDiscover}>
           <p className="form-description">
-            🧠 The crawler learns and discovers new Swahili content creators as you use it.
-            Each search grows the knowledge base for better future discoveries.
+            🧠 The crawler learns and discovers new Swahili content creators as you use it. Each
+            search grows the knowledge base for better future discoveries.
           </p>
 
           <div className="form-row">
@@ -428,9 +428,7 @@ function App() {
                         <span className="engagement">⚡ {post.engagementScore}</span>
                       )}
                       <span
-                        className={`confidence ${
-                          post.confidence >= 0.99 ? "confidence-high" : ""
-                        }`}
+                        className={`confidence ${post.confidence >= 0.99 ? "confidence-high" : ""}`}
                       >
                         {(post.confidence * 100).toFixed(1)}% Swahili
                       </span>
