@@ -34,19 +34,12 @@ const POPULAR_SWAHILI_HASHTAGS = [
   "kiswahili",
 ];
 
-const SWAHILI_HANDLES = [
-  "changetanzania.bsky.social",
-  "bsky.app",
-  "tanzania.bsky.social",
-];
+const SWAHILI_HANDLES = ["changetanzania.bsky.social", "bsky.app", "tanzania.bsky.social"];
 
 /**
  * Get random popular Bluesky handles
  */
-export async function getRandomHandles(
-  agent: BskyAgent,
-  limit: number
-): Promise<string[]> {
+export async function getRandomHandles(agent: BskyAgent, limit: number): Promise<string[]> {
   try {
     const handles: Set<string> = new Set();
 
@@ -101,15 +94,11 @@ export async function findPostsByTags(
           }
 
           for (const post of response.data.posts) {
-            if (
-              seenUris.has(post.uri) ||
-              posts.length >= limit
-            ) {
+            if (seenUris.has(post.uri) || posts.length >= limit) {
               continue;
             }
 
-            const text =
-              (post.record as Record<string, unknown>).text as string;
+            const text = (post.record as Record<string, unknown>).text as string;
             if (!text || text.trim().length === 0) {
               continue;
             }
@@ -121,14 +110,12 @@ export async function findPostsByTags(
               );
 
               if (swahiliResult && swahiliResult.prob >= 0.98) {
-                const authorHandle =
-                  post.author.handle || "unknown.bsky.social";
+                const authorHandle = post.author.handle || "unknown.bsky.social";
                 posts.push({
                   uri: post.uri,
                   record: {
                     text: text,
-                    createdAt: (post.record as Record<string, unknown>)
-                      .createdAt as string,
+                    createdAt: (post.record as Record<string, unknown>).createdAt as string,
                   },
                   discoveredFrom: authorHandle,
                   discoveryMethod: `tag_${tag}`,
@@ -224,16 +211,11 @@ export async function discoverSwahiliPosts(
             }
 
             for (const item of response.data.feed) {
-              if (
-                !item.post ||
-                !item.post.record ||
-                seenUris.has(item.post.uri)
-              ) {
+              if (!item.post || !item.post.record || seenUris.has(item.post.uri)) {
                 continue;
               }
 
-              const text =
-                (item.post.record as Record<string, unknown>).text as string;
+              const text = (item.post.record as Record<string, unknown>).text as string;
               if (!text || text.trim().length === 0) {
                 continue;
               }
@@ -249,8 +231,7 @@ export async function discoverSwahiliPosts(
                     uri: item.post.uri,
                     record: {
                       text: text,
-                      createdAt: (item.post.record as Record<string, unknown>)
-                        .createdAt as string,
+                      createdAt: (item.post.record as Record<string, unknown>).createdAt as string,
                     },
                     discoveredFrom: handle,
                     discoveryMethod: "random_handle",
@@ -274,7 +255,9 @@ export async function discoverSwahiliPosts(
             await new Promise((resolve) => setTimeout(resolve, 300));
           }
         } catch (error) {
-          console.error(`  ⚠️  Error fetching from @${handle}: ${error instanceof Error ? error.message : "Unknown error"}`);
+          console.error(
+            `  ⚠️  Error fetching from @${handle}: ${error instanceof Error ? error.message : "Unknown error"}`
+          );
         }
       }
 
@@ -300,9 +283,7 @@ export async function discoverSwahiliPosts(
 
     // Sort by timestamp (newest first)
     allPosts.sort(
-      (a, b) =>
-        new Date(b.record.createdAt).getTime() -
-        new Date(a.record.createdAt).getTime()
+      (a, b) => new Date(b.record.createdAt).getTime() - new Date(a.record.createdAt).getTime()
     );
 
     // Trim to limit

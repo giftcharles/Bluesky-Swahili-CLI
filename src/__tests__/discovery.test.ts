@@ -50,9 +50,7 @@ describe("Discovery Module", () => {
       }
 
       const results = swahiliResults[resultIndex++];
-      const swahiliResult = results.find(
-        (r: { lang: string; prob: number }) => r.lang === "sw"
-      );
+      const swahiliResult = results.find((r: { lang: string; prob: number }) => r.lang === "sw");
       return swahiliResult !== undefined && swahiliResult.prob >= 0.98;
     });
 
@@ -145,9 +143,7 @@ describe("Discovery Module", () => {
     ];
 
     const sorted = [...posts].sort(
-      (a, b) =>
-        new Date(b.record.createdAt).getTime() -
-        new Date(a.record.createdAt).getTime()
+      (a, b) => new Date(b.record.createdAt).getTime() - new Date(a.record.createdAt).getTime()
     );
 
     expect(sorted[0].record.text).toBe("Third");

@@ -3,11 +3,7 @@
 import { BskyAgent } from "@atproto/api";
 import * as dotenv from "dotenv";
 import langdetect from "langdetect";
-import {
-  discoverSwahiliPosts,
-  DiscoveryOptions,
-  DiscoveredPost,
-} from "./discovery.js";
+import { discoverSwahiliPosts, DiscoveryOptions, DiscoveredPost } from "./discovery.js";
 
 dotenv.config();
 
@@ -92,10 +88,7 @@ EXAMPLES:
 `);
 }
 
-async function printDiscoveryResults(
-  posts: DiscoveredPost[],
-  options: CLIOptions
-) {
+async function printDiscoveryResults(posts: DiscoveredPost[], options: CLIOptions) {
   if (options.json) {
     const output = {
       mode: "discover",
@@ -129,9 +122,7 @@ async function printDiscoveryResults(
     }
 
     console.log("═".repeat(65));
-    console.log(
-      `Done. Printed ${posts.length} Swahili posts from ${uniqueSources.size} sources.`
-    );
+    console.log(`Done. Printed ${posts.length} Swahili posts from ${uniqueSources.size} sources.`);
   }
 }
 
@@ -181,9 +172,7 @@ async function main() {
   const password = process.env.BSKY_PASSWORD;
 
   if (!username || !password) {
-    console.error(
-      "Error: BSKY_USERNAME and BSKY_PASSWORD environment variables are required"
-    );
+    console.error("Error: BSKY_USERNAME and BSKY_PASSWORD environment variables are required");
     console.error("See .env.example for setup instructions");
     process.exit(1);
   }
@@ -240,11 +229,8 @@ async function main() {
             posts.push({
               uri: item.post.uri,
               record: {
-                text: (item.post.record as Record<string, unknown>)
-                  .text as string,
-                createdAt: (
-                  item.post.record as Record<string, unknown>
-                ).createdAt as string,
+                text: (item.post.record as Record<string, unknown>).text as string,
+                createdAt: (item.post.record as Record<string, unknown>).createdAt as string,
               },
             });
             fetchedCount++;
@@ -276,9 +262,7 @@ async function main() {
           const swahiliResult = results.find(
             (r: { lang: string; prob: number }) => r.lang === "sw"
           );
-          return (
-            swahiliResult !== undefined && swahiliResult.prob >= 0.98
-          );
+          return swahiliResult !== undefined && swahiliResult.prob >= 0.98;
         } catch {
           return false;
         }
