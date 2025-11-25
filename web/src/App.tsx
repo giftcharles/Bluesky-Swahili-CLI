@@ -61,7 +61,7 @@ const PRESET_TAGS = [
 ];
 
 function App() {
-  const [mode, setMode] = useState<"discover" | "posts">("discover");
+  const [mode, setMode] = useState<"discover" | "posts" | "cache">("discover");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<DiscoverResponse | PostsResponse | null>(null);
@@ -202,6 +202,12 @@ function App() {
         >
           👤 Specific Handle
         </button>
+        <button
+          className={`tab ${mode === "cache" ? "active" : ""}`}
+          onClick={() => setMode("cache")}
+        >
+          📊 Cache Viewer
+        </button>
       </div>
 
       {mode === "discover" ? (
@@ -295,7 +301,7 @@ function App() {
             {loading ? "🕷️ Crawling..." : "🔍 Discover Swahili Posts"}
           </button>
         </form>
-      ) : (
+      ) : mode === "posts" ? (
         <form className="search-form" onSubmit={handleFetchPosts}>
           <div className="form-row">
             <div className="form-group">
@@ -324,6 +330,79 @@ function App() {
             {loading ? "Fetching..." : "📥 Fetch Swahili Posts"}
           </button>
         </form>
+      ) : (
+        <div className="cache-viewer">
+          {cacheInfo ? (
+            <>
+              <div className="cache-header">
+                <div className="cache-stats-grid">
+                  <div className="cache-stat-card">
+                    <span className="cache-stat-label">Total Profiles</span>
+                    <span className="cache-stat-value">{cacheInfo.totalProfiles}</span>
+                  </div>
+                  <div className="cache-stat-card">
+                    <span className="cache-stat-label">Total Discoveries</span>
+                    <span className="cache-stat-value">{cacheInfo.totalDiscoveries}</span>
+                  </div>
+                  <div className="cache-stat-card">
+                    <span className="cache-stat-label">Last Updated</span>
+                    <span className="cache-stat-value">
+                      {new Date(cacheInfo.lastUpdated).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                {cacheInfo.topTags.length > 0 && (
+                  <div className="top-tags-section">
+                    <h3>Top Hashtags</h3>
+                    <div className="top-tags">
+                      {cacheInfo.topTags.map((tagInfo) => (
+                        <span key={tagInfo.tag} className="tag">
+                          #{tagInfo.tag} <span className="tag-count">({tagInfo.count})</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="profiles-section">
+                <h3>Recently Discovered Profiles</h3>
+                {cacheInfo.recentProfiles.length > 0 ? (
+                  <div className="profiles-list">
+                    {cacheInfo.recentProfiles.map((profile) => (
+                      <div key={profile.handle} className="profile-card">
+                        <div className="profile-info">
+                          <a
+                            href={`https://bsky.app/profile/${profile.handle}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="profile-handle"
+                          >
+                            @{profile.handle}
+                          </a>
+                          {profile.displayName && (
+                            <span className="profile-display-name">{profile.displayName}</span>
+                          )}
+                        </div>
+                        <span className="profile-discovered">
+                          {new Date(profile.discoveredAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="empty-message">No profiles in cache yet. Start discovering!</p>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="loading">
+              <div className="spinner"></div>
+              <p>Loading cache information...</p>
+            </div>
+          )}
+        </div>
       )}
 
       {error && <div className="error">⚠️ {error}</div>}
