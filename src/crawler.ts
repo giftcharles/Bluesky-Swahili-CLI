@@ -86,11 +86,7 @@ function loadCache(): DiscoveryCache {
     lastUpdated: new Date().toISOString(),
     totalDiscoveries: 0,
     profiles: {},
-    seedProfiles: [
-      "changetanzania.bsky.social",
-      "tanzania.bsky.social",
-      "kenya.bsky.social",
-    ],
+    seedProfiles: ["changetanzania.bsky.social", "tanzania.bsky.social", "kenya.bsky.social"],
     crawlHistory: [],
   };
 }
@@ -113,10 +109,8 @@ function isSwahili(text: string): { isSwahili: boolean; confidence: number } {
 
   try {
     const results = langdetect.detect(text);
-    const swahiliResult = results.find(
-      (r: { lang: string; prob: number }) => r.lang === "sw"
-    );
-    if (swahiliResult && swahiliResult.prob >= 0.90) {
+    const swahiliResult = results.find((r: { lang: string; prob: number }) => r.lang === "sw");
+    if (swahiliResult && swahiliResult.prob >= 0.9) {
       return { isSwahili: true, confidence: swahiliResult.prob };
     }
   } catch {
@@ -141,10 +135,7 @@ function calculateEngagement(post: any): number {
 }
 
 // Weighted random selection - prefers higher scores but maintains randomness
-function weightedRandomSelect<T extends { weight: number }>(
-  items: T[],
-  count: number
-): T[] {
+function weightedRandomSelect<T extends { weight: number }>(items: T[], count: number): T[] {
   if (items.length <= count) return items;
 
   const selected: T[] = [];
@@ -152,10 +143,7 @@ function weightedRandomSelect<T extends { weight: number }>(
 
   for (let i = 0; i < count && remaining.length > 0; i++) {
     // Add randomness factor
-    const totalWeight = remaining.reduce(
-      (sum, item) => sum + item.weight + Math.random() * 0.5,
-      0
-    );
+    const totalWeight = remaining.reduce((sum, item) => sum + item.weight + Math.random() * 0.5, 0);
     let random = Math.random() * totalWeight;
 
     for (let j = 0; j < remaining.length; j++) {
@@ -321,8 +309,7 @@ async function crawlForNewProfiles(
       "mashariki",
     ];
 
-    const randomTag =
-      swahiliHashtags[Math.floor(Math.random() * swahiliHashtags.length)];
+    const randomTag = swahiliHashtags[Math.floor(Math.random() * swahiliHashtags.length)];
 
     try {
       const searchResults = await agent.app.bsky.feed.searchPosts({
@@ -397,14 +384,10 @@ export async function smartDiscoverSwahiliPosts(
   const seenTexts = new Set<string>();
   let newProfilesDiscovered = 0;
 
-  console.log(
-    `📊 Cache has ${Object.keys(cache.profiles).length} known Swahili profiles`
-  );
+  console.log(`📊 Cache has ${Object.keys(cache.profiles).length} known Swahili profiles`);
 
   // Decide: explore (crawl for new) or exploit (use cache)
-  const shouldExplore =
-    Math.random() < explorationRate ||
-    Object.keys(cache.profiles).length < 10;
+  const shouldExplore = Math.random() < explorationRate || Object.keys(cache.profiles).length < 10;
 
   // Get starting profiles
   let startingProfiles: string[] = [];
@@ -426,12 +409,7 @@ export async function smartDiscoverSwahiliPosts(
       console.log(`🕷️ Crawling from @${startHandle}...`);
 
       try {
-        const newProfiles = await crawlForNewProfiles(
-          agent,
-          cache,
-          startHandle,
-          15
-        );
+        const newProfiles = await crawlForNewProfiles(agent, cache, startHandle, 15);
 
         for (const profile of newProfiles) {
           if (!cache.profiles[profile.did]) {
@@ -544,9 +522,7 @@ export async function smartDiscoverSwahiliPosts(
     console.log("🏷️ Searching hashtags for more posts...");
 
     const hashtagsToSearch =
-      tags.length > 0
-        ? tags
-        : ["kiswahili", "swahili", "habari", "tanzania", "kenya"];
+      tags.length > 0 ? tags : ["kiswahili", "swahili", "habari", "tanzania", "kenya"];
 
     for (const tag of shuffle(hashtagsToSearch).slice(0, 3)) {
       if (posts.length >= limit) break;
@@ -615,25 +591,17 @@ export async function smartDiscoverSwahiliPosts(
   // Sort by engagement and recency, with some randomness
   posts.sort((a, b) => {
     const scoreA =
-      a.engagementScore * 0.3 +
-      new Date(a.createdAt).getTime() / 1e12 +
-      Math.random() * 0.2;
+      a.engagementScore * 0.3 + new Date(a.createdAt).getTime() / 1e12 + Math.random() * 0.2;
     const scoreB =
-      b.engagementScore * 0.3 +
-      new Date(b.createdAt).getTime() / 1e12 +
-      Math.random() * 0.2;
+      b.engagementScore * 0.3 + new Date(b.createdAt).getTime() / 1e12 + Math.random() * 0.2;
     return scoreB - scoreA;
   });
 
   // Save updated cache
   saveCache(cache);
 
-  console.log(
-    `✅ Found ${posts.length} posts, discovered ${newProfilesDiscovered} new profiles`
-  );
-  console.log(
-    `📊 Cache now has ${Object.keys(cache.profiles).length} Swahili profiles`
-  );
+  console.log(`✅ Found ${posts.length} posts, discovered ${newProfilesDiscovered} new profiles`);
+  console.log(`📊 Cache now has ${Object.keys(cache.profiles).length} Swahili profiles`);
 
   return {
     posts: posts.slice(0, limit),
@@ -669,10 +637,7 @@ export function getCacheStats(): {
     .map(([tag, count]) => ({ tag, count }));
 
   const recentProfiles = Object.values(cache.profiles)
-    .sort(
-      (a, b) =>
-        new Date(b.discoveredAt).getTime() - new Date(a.discoveredAt).getTime()
-    )
+    .sort((a, b) => new Date(b.discoveredAt).getTime() - new Date(a.discoveredAt).getTime())
     .slice(0, 10);
 
   return {

@@ -5,11 +5,7 @@ import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import { BskyAgent } from "@atproto/api";
 import langdetect from "langdetect";
-import {
-  smartDiscoverSwahiliPosts,
-  getCacheStats,
-  clearCache,
-} from "./crawler.js";
+import { smartDiscoverSwahiliPosts, getCacheStats, clearCache } from "./crawler.js";
 
 dotenv.config();
 
@@ -73,12 +69,7 @@ app.post("/api/cache/clear", (_req: Request, res: Response) => {
 app.post("/api/discover", async (req: Request, res: Response) => {
   try {
     const body = req.body as DiscoverBody;
-    const {
-      limit = 30,
-      explorationRate = 0.4,
-      tags = [],
-      freshness = "any",
-    } = body;
+    const { limit = 30, explorationRate = 0.4, tags = [], freshness = "any" } = body;
 
     if (!process.env.BSKY_USERNAME || !process.env.BSKY_PASSWORD) {
       res.status(401).json({ error: "Missing BSKY_USERNAME or BSKY_PASSWORD" });
@@ -154,7 +145,11 @@ app.post("/api/posts", async (req: Request, res: Response) => {
       });
 
       for (const post of response.data.feed) {
-        if (post.post.record && typeof post.post.record === "object" && "text" in post.post.record) {
+        if (
+          post.post.record &&
+          typeof post.post.record === "object" &&
+          "text" in post.post.record
+        ) {
           const text = (post.post.record as { text: string }).text;
           const langResults = langdetect.detect(text);
           const swahiliResult = langResults.find(
